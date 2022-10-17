@@ -6,7 +6,7 @@ flux-test-deps: start-flux
 
 start-flux:
 	curl -s https://fluxcd.io/install.sh | sudo bash
-	flux bootstrap github --owner=nikimanoledaki --repository=gitops-energy-usage --path=clusters
+	flux bootstrap github --owner=$(GITHUB_USER) --repository=gitops-energy-usage --path=clusters
 
 grafana:
 	scripts/configure-grafana.sh
