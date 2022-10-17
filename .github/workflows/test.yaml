@@ -1,0 +1,11 @@
+name: test
+
+on: [pull_request, workflow_dispatch]
+
+jobs:
+  test:
+    name: test
+    runs-on: [self-hosted, equinix-rhel, manual-destruct]
+    steps:
+      - name: Test
+        run: kubectl apply -f https://raw.githubusercontent.com/nikimanoledaki/date-setter/main/build/default-deployment.yaml

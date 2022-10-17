@@ -1,0 +1,28 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: GitRepository
+metadata:
+  name: kepler
+  namespace: flux-system
+spec:
+  interval: 24h
+  ref:
+    branch: main
+  url: https://github.com/sustainable-computing-io/kepler
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
+kind: Kustomization
+metadata:
+  name: kepler
+  namespace: flux-system
+spec:
+  dependsOn:
+  - name: kube-prometheus-setup
+  - name: kube-prometheus
+  interval: 24h
+  path: ./manifests/kubernetes/
+  prune: true
+  wait: true
+  sourceRef:
+    kind: GitRepository
+    name: kepler
