@@ -39,33 +39,35 @@ This is a step-by-step guide for how to create a Kubernetes baremetal cluster "t
 Here, the energy consumption of a CI platform will be measured by focusing on job runner itself.
 GitHub Actions allows us to do this by deploying a self-hosted runner.
 
-1. Setup a K8s cluster with Kepler [(see above for instructions)](#env-setup).
-2. Manually install Prometheus & Grafana.
-3. Install Helm & ARC on the cluster to turn that node into a self-hosted GitHub runner.
+1. Setup a K8s cluster with Kepler, Prometheus & Grafana [(by following the instructions above)](#env-setup).
+2. Install Helm & ARC on the cluster to turn that node into a self-hosted GitHub runner. This will hook the K8s cluster to the GitHub Actions [workflow](.github/workflows/test.yaml). It contains a GH Actions job that deploys a mock API to a K8s cluster.
 ```bash
 make ci-test-deps
 ```
-1. Using a simple GitHub Actions [workflow](.github/workflows/test.yaml), create a GH Actions job that deploys a mock API to a K8s cluster.
+1. Run the GH action manually to create the mock API Deployment!
 2. [WIP] Gather data in milliJoules on energy consumption used by Node (self-hosted runner) to perform this action.
 
 ### Test 2: Measure the energy consumption of Flux
-1. Setup a K8s cluster with Kepler [(see above for instructions)](#env-setup) & Flux.
+1. Setup a K8s cluster with Kepler [(by following the instructions above)](#env-setup).
+2. Install & bootstrap Flux.
 ```bash
 make flux-test-deps
 make start-flux
 ```
 This will bootstrap Flux and automatically add all the dependencies on the cluster e.g. Kepler, Prometheus & Grafana.
 The manifests of these dependencies live in the `clusters/` dir ([here](clusters)).
-1. Add Mock API's manifests as a Source to git repo. Uncomment the code in `clusters/app.yaml` ([here](clusters/app.yaml)).
-2. [WIP] Gather data in milliJoules on energy consumption used by Flux Controllers to perform this action.
+One of these manifests contains the Mock API's manifest.
+3. Uncomment the code for the mock API in `clusters/app.yaml` ([here](clusters/app.yaml)). Commit and push your changes.
+4. [WIP] Gather data in milliJoules on energy consumption used by Flux Controllers to perform this action.
    1. [WIP] Timecheck is probably going to be a Git change + use Flux to force of Kustomization.
 
 ### Test 3: Measure the energy consumption of Flux garbage collection [WIP]
-1. Complete [previous test's](#test-2-measure-the-energy-consumption-of-flux) steps.
-4. Delete mock API's manifest from the git repo watched by Flux.
-5. [WIP] Gather data on energy consumption used by Flux Controllers to perform this action & compare with that of Deployment that continues to exist in other cluster from a given checkpoint.
+1. Complete the [steps](#test-2-measure-the-energy-consumption-of-flux) from the previous test.
+2. Delete the manifest of the mock API that lives in ([clusters/app.yaml](clusters/app.yaml)). Commit and push your changes.
+3. [WIP] Gather data on energy consumption used by Flux Controllers to perform this action & compare with that of Deployment that continues to exist in other cluster from a given checkpoint.
 
 ### [Nice-to-have] Visualise energy metrics with Grafana
+Spin up Grafana and load the Kepler dashboard:
 ```
 make grafana
 ```
