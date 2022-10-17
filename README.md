@@ -25,12 +25,17 @@ git clone git@github.com:<username>/sustainability-journey-with-gitops.git
 ```
 
 ### Environment Setup
-This is a step-by-step guide for how to create a Kubernetes baremetal cluster "the hard way" with `kubeadm`, on RHEL 8. It is recommended to use either baremetal (preferred for this test) or a VM (microVM hopefully coming soon!).
+This is a step-by-step guide for how to create a Kubernetes baremetal cluster "the hard way" with `kubeadm`, on RHEL 8. It is recommended to use either baremetal (preferred for this test).
 
 - [[GUIDE](create-cluster.md)] **Follow these steps to create a cluster with kubeadm & install Kepler on it.** 
     - Kepler is deployed on one single node, the Control Plane Node, as a Daemonset's Pod.
     - Kepler can then be used to gather energy consumption metrics about resource.
-  
+
+[ALL WIP] Next steps for Kepler:
+- Use it with a VM, or even better, a Liquid Metal microVM! Hopefully coming soon!
+- Use it in an EC2 instance (which is technically a VM). This **does not work yet** but it might be possible, if the hypervisor supports it, and with a lot of integration work.
+- Use it in a Kind cluster. This is currently in the works over at Kepler.
+
 ### Test 1: Measure the energy consumption of a CI platform
 
 Here, the energy consumption of a CI platform will be measured by focusing on job runner itself.
