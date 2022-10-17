@@ -11,8 +11,6 @@ Our infrastructure needs are increasingly energy and carbon intensive. CI/CD is 
 
 ----
 
-</br>
-
 ### Aim
 
 This project aims to measure and compare the energy consumption of snowflake clusters versus that of Flux-based GitOps clusters.
@@ -67,7 +65,7 @@ The manifests of these dependencies live in the `clusters/` dir ([here](clusters
 4. Delete mock API's manifest from the git repo watched by Flux.
 5. [WIP] Gather data on energy consumption used by Flux Controllers to perform this action & compare with that of Deployment that continues to exist in other cluster from a given checkpoint.
 
-### [Nice-to-have] Visualise energy metrics with Grafana
+### [Nice-to-have] Visualise energy metrics with Grafana
 ```
 make grafana
 ```
