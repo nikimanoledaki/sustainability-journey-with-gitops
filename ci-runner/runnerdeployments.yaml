@@ -4,7 +4,7 @@ kind: RunnerDeployment
 metadata:
   name: self-destruct
 spec:
-  replicas: 5
+  replicas: 1
   template:
     spec:
       repository: nikimanoledaki/sustainability-journey-with-gitops
@@ -17,7 +17,7 @@ kind: RunnerDeployment
 metadata:
   name: manual-destruct
 spec:
-  replicas: 5
+  replicas: 1
   template:
     spec:
       ephemeral: false
