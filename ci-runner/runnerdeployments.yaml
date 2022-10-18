@@ -7,9 +7,9 @@ spec:
   replicas: 5
   template:
     spec:
-      repository: nikimanoledaki/gitops-energy-usage
+      repository: nikimanoledaki/sustainability-journey-with-gitops
       labels:
-      - liquid-metal
+      - equinix-rhel
       - self-destruct
 ---
 apiVersion: actions.summerwind.dev/v1alpha1
@@ -21,7 +21,7 @@ spec:
   template:
     spec:
       ephemeral: false
-      repository: nikimanoledaki/gitops-energy-usage
+      repository: nikimanoledaki/sustainability-journey-with-gitops
       labels:
-      - liquid-metal
+      - equinix-rhel
       - manual-destruct
