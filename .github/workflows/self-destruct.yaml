@@ -1,0 +1,24 @@
+name: self-destruct
+
+on: [pull_request, workflow_dispatch]
+
+jobs:
+  self-destruct:
+    name: deploy-on-self-destruct
+    runs-on: [self-hosted, equinix-rhel, self-destruct]
+    steps:
+      - uses: actions/checkout@master
+      - name: Install kubectl
+        run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          curl -LO "https://dl.k8s.io/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256"
+          echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
+          sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+      - name: Setup Kubeconfig
+        env:
+          CONFIG: ${{ secrets.CONFIG }}
+        run: |
+          mkdir -p $HOME/.kube
+          echo -n '${{ secrets.CONFIG }}' | base64 -d >> $HOME/.kube/config
+      - name: Deploy mock API
+        run: kubectl apply -f https://raw.githubusercontent.com/scottrigby/how-to-write-a-reconciler-using-k8s-controller-runtime/main/cfp-api/manifests/cfp-api.yaml
