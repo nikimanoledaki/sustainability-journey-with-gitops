@@ -1,6 +1,6 @@
 # Create a cluster with kubeadm & install Kepler on it
 
-This is a step-by-step guide for how to create a Kubernetes cluster "the hard way" with kubeadm. It is then used to run Kepler on it to gather energy consumption metrics.
+Create a Kubernetes cluster "the hard way" with kubeadm and run [Kepler](https://github.com/sustainable-computing-io/kepler) on it.
 
 ## RHEL 8
 ```bash install-rhel-kepler.sh
