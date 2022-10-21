@@ -33,7 +33,7 @@ To make things easier, [here](create-cluster.md) is a step-by-step guide for how
 Once the environment is setup, the following tests can be performed on the cluster.
 
 
-#### 3. Instal & bootstrap Flux
+#### 3. Install & bootstrap Flux
 Install Flux if you have not done so already. Then, bootstrap Flux on your cluster.
 ```bash
 curl -s https://fluxcd.io/install.sh | sudo bash
@@ -42,14 +42,133 @@ flux bootstrap github --owner=$(GITHUB_USER) --repository=gitops-energy-usage --
 This will automatically add all the dependencies - Kepler, Prometheus & Grafana - on the cluster. Their manifests live in the `clusters/` dir ([here](clusters)).
 
 #### 4. Gather base energy data about Flux
-To do this, first, port-forward Prometheus:
+First, let's check what lives in the Flux namespace:
+```bash
+kubectl get all -n flux-system
+NAME                                          READY   STATUS    RESTARTS   AGE
+pod/helm-controller-68b799b589-5zh7z          1/1     Running   0          3m34s
+pod/kustomize-controller-7ddb8d8f7-6p4lb      1/1     Running   0          3m34s
+pod/notification-controller-56bd788f9-96djn   1/1     Running   0          3m34s
+pod/source-controller-7d98d6688c-d6mmd        1/1     Running   0          3m34s
+
+NAME                              TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
+service/notification-controller   ClusterIP   10.99.61.198   <none>        80/TCP    3m35s
+service/source-controller         ClusterIP   10.99.132.41   <none>        80/TCP    3m35s
+service/webhook-receiver          ClusterIP   10.104.46.54   <none>        80/TCP    3m35s
+
+NAME                                      READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/helm-controller           1/1     1            1           3m35s
+deployment.apps/kustomize-controller      1/1     1            1           3m35s
+deployment.apps/notification-controller   1/1     1            1           3m35s
+deployment.apps/source-controller         1/1     1            1           3m35s
+
+NAME                                                DESIRED   CURRENT   READY   AGE
+replicaset.apps/helm-controller-68b799b589          1         1         1       3m35s
+replicaset.apps/kustomize-controller-7ddb8d8f7      1         1         1       3m35s
+replicaset.apps/notification-controller-56bd788f9   1         1         1       3m35s
+replicaset.apps/source-controller-7d98d6688c        1         1         1       3m35s
+```
+
+To get the energy metrics, first, port-forward Prometheus to `9090`:
 ```bash
 kubectl port-forward pod/prometheus-k8s-0 9090 -n monitoring
 ```
 
-Then, query Prometheus to gather data about the Flux Controllers:
+Then, query Prometheus to gather data about Flux Controllers living in the `flux` namespace:
+
+Query the Prometheus Pod `prometheus-k8s-0` with a curl request at the `api/v1/query` endpoint with the following [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) query:
+
 ```bash
 curl -G http://localhost:9090/api/v1/query --data-urlencode "query=pod_curr_energy_in_pkg_millijoule{pod_namespace='flux-system'}" | jq
+```
+In the command above, the flag `--data-urlencode` is used to pass a Prometheus query in PromQL syntax. The result is piped to `jq` to transform it into json format. 
+
+The query itself measures the energy consumption of all of the Pods in the `flux-system` namespace, where the Flux controllers are deployed.
+
+There are four Flux controllers. These are the controllers for Sources, Helm, Kustomize, and Notification resources.
+
+The command below returns the **sum** of the energy consumed by the Flux controllers:
+```bash
+curl -G http://localhost:9090/api/v1/query --data-urlencode "query=sum(pod_curr_energy_in_pkg_millijoule{pod_namespace='flux-system'})" | jq
+{
+  "status": "success",
+  "data": {
+    "resultType": "vector",
+    "result": [
+      {
+        "metric": {},
+        "value": [
+          1664037856.556,
+          "4"
+        ]
+      }
+    ]
+  }
+}
+```
+
+Narrow down the json results with the following filters for `jq` to only return the value:
+```bash
+curl -G http://localhost:9090/api/v1/query --data-urlencode "query=sum(pod_curr_energy_in_pkg_millijoule{pod_namespace='flux-system'})" | jq '.data.result[0].value[0]'
+1664037900.094
+```
+
+The value is `1664037900.094 mJ (millijoules)`. The section below, ["Joule for Beginners"](#joule-for-beginners), goes over the basics (or a refresher) of joules.
+
+Ideally it would be great to narrow this further to a range that calculates the past ohur by using a [range vector](https://prometheus.io/docs/prometheus/latest/querying/basics/#range-vector-selectors).
+
+#### 4. Gather Node-level energy data
+
+The `node_enegy_stat` vector will return information about the Kubernetes Node:
+```bash
+curl -G http://localhost:9090/api/v1/query --data-urlencode "query=node_energy_stat" | jq
+{
+  "status": "success",
+  "data": {
+    "resultType": "vector",
+    "result": [
+      {
+        "metric": {
+          "__name__": "node_energy_stat",
+          "container": "kepler-exporter",
+          "cpu_architecture": "Sandy Bridge",
+          "endpoint": "http",
+          "instance": "kind-control-plane",
+          "job": "kepler-exporter",
+          "namespace": "kepler",
+          "node_block_devices_used": "20",
+          "node_curr_bytes_read": "0",
+          "node_curr_bytes_writes": "135168",
+          "node_curr_cache_miss": "0",
+          "node_curr_container_cpu_usage_seconds_total": "3",
+          "node_curr_container_memory_working_set_bytes": "630784",
+          "node_curr_cpu_cycles": "0",
+          "node_curr_cpu_instr": "0",
+          "node_curr_cpu_time": "0",
+          "node_curr_energy_in_core_joule": "0.013000",
+          "node_curr_energy_in_dram_joule": "0.095000",
+          "node_curr_energy_in_gpu_joule": "0.000000",
+          "node_curr_energy_in_other_joule": "0.000000",
+          "node_curr_energy_in_pkg_joule": "0.013000",
+          "node_curr_energy_in_uncore_joule": "0.000000",
+          "node_name": "kind-control-plane",
+          "pod": "kepler-exporter-7nbzs",
+          "service": "kepler-exporter"
+        },
+        "value": [
+          1664036361.77,
+          "0"
+        ]
+      }
+    ]
+  }
+}
+```
+
+Lastly, the json result for `node_energy_stat` narrowed down by adding filters to `jq`:
+```bash
+curl -G http://localhost:9090/api/v1/query --data-urlencode "query=node_energy_stat" | jq '.data.result[0].value[0]'
+1664037946.617
 ```
 
 #### 5. Deploy a mock application with Flux
@@ -78,3 +197,13 @@ It would be great to work on integrating Kepler with the following environments:
 - Use it with a VM, or even better, a Liquid Metal microVM! Hopefully coming soon!
 - Use it in an EC2 instance (which is technically a VM). This **does not work yet** but it might be possible, if the hypervisor supports it, and with a lot of integration work.
 - Use it in a Kind cluster. This is currently in the works over at Kepler.
+
+#### Joule for beginners
+
+What is a joule (J)? Very simply put, it is a unit of energy. 
+
+1 joule equals 1000 millijoules (mJ), where `1 J = 1000 mJ`.
+
+1 joule _per second_ equals to 1 Watt, so `1W = 1 J/s`.
+
+Therefore, `1 W/h = 3600 J = 3600000 mJ`, which is the same as `(60 sec x 60 min) x 1000`, where the multiplication by 1000 converts joules to millijoules.
