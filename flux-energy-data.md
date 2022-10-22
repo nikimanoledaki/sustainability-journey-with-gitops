@@ -1,15 +1,16 @@
-#!/bin/bash
-# - Current (per 3 seconds) (`curr`)
-# - Total (accumulative) (`total`)
-# - By resource
-# - Sum in namespace (`sum[...]`)
-# - Compute (`pkg`)
-# - Memory (`dram`)
-# - Pod (`pod_name`)
-# - Namespace (`pod_namespace`)
+## Kepler Metrics
+- Sum (`sum[...]`)
+- [Current](#1-current) (per 3 seconds) (`curr`)
+- [Total](#2-total) (accumulative) (`total`)
+- [Compute](#3-compute-only) (`pkg`)
+- [Memory](#4-memory-only) (`dram`)
+- Pod (`pod_name`)
+- Namespace (`pod_namespace`)
 
-# 1. Current
-# each separate resource
+### 1. Current
+
+**Each separate resource for namespace `flux-system`:**
+```bash
 curl -sG http://localhost:9090/api/v1/query --data-urlencode "query=pod_curr_energy_in_pkg_millijoule{pod_namespace='flux-system'}" | jq
 
 {
@@ -96,19 +97,24 @@ curl -sG http://localhost:9090/api/v1/query --data-urlencode "query=pod_curr_ene
     ]
   }
 }
+```
 
-
-# total in namespace
+**Total for namespace `flux-system`**
+```bash
 curl -G http://localhost:9090/api/v1/query --data-urlencode "query=sum(pod_curr_energy_in_pkg_millijoule{pod_namespace='flux-system'})" | jq '.data.result[0].value[0]'
 1666394273.906
+```
 
-# actual in namespace in last minute
-# TODO: is this total?
+**Current for namespace `flux-system` in the last minute**
+### TODO: is this total?
+```bash
 curl -sG http://localhost:9090/api/v1/query --data-urlencode "query=rate(pod_curr_energy_millijoule{pod_namespace='flux-system'}[1m])/3" | jq '.data.result[0].value[0]'
 1666394505.589
+```
 
-# 2. Accumulative
-# each separate resource
+### 2. Accumulative
+**Each separate resource**
+```bash
 curl -G http://localhost:9090/api/v1/query --data-urlencode "query=pod_total_energy_in_pkg_millijoule{pod_namespace='flux-system'}" | jq
 {
   "status": "success",
@@ -194,14 +200,17 @@ curl -G http://localhost:9090/api/v1/query --data-urlencode "query=pod_total_ene
     ]
   }
 }
+```
 
-# total in namespace
+**Total for namespace `flux-system`**
+```bash
 curl -G http://localhost:9090/api/v1/query --data-urlencode "query=sum(pod_total_energy_in_pkg_millijoule{pod_namespace='flux-system'})" | jq '.data.result[0].value[0]'
 1666394385.315
+```
 
-
-# 3. Compute-only
-# each separate resource
+### 3. Compute-only
+**Each separate resource**
+```bash
 curl -G http://localhost:9090/api/v1/query --data-urlencode "query=pod_curr_energy_in_pkg_millijoule{pod_namespace='flux-system'}" | jq
 {
   "status": "success",
@@ -287,14 +296,18 @@ curl -G http://localhost:9090/api/v1/query --data-urlencode "query=pod_curr_ener
     ]
   }
 }
+```
 
-# total in namespace
+**Total for namespace `flux-system`**
+```bash
 curl -G http://localhost:9090/api/v1/query --data-urlencode "query=sum(pod_total_energy_in_pkg_millijoule{pod_namespace='flux-system'})" | jq '.data.result[0].value[0]'
 1666394479.49
+```
 
-# 4. Memory-only
+### 4. Memory-only
 
-# each separate resource
+**Each separate resource**
+```bash
 curl -G http://localhost:9090/api/v1/query --data-urlencode "query=pod_curr_energy_in_dram_millijoule{pod_namespace='flux-system'}" | jq
 
 {
@@ -381,7 +394,10 @@ curl -G http://localhost:9090/api/v1/query --data-urlencode "query=pod_curr_ener
     ]
   }
 }
+```
 
-# total in namespace
+**Total for namespace `flux-system`**
+```bash
 curl -G http://localhost:9090/api/v1/query --data-urlencode "query=sum(pod_curr_energy_in_dram_millijoule{pod_namespace='flux-system'})" | jq '.data.result[0].value[0]'
 1666394498.732
+```
