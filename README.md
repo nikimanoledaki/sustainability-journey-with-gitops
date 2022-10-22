@@ -37,7 +37,7 @@ Once the environment is setup, the following tests can be performed on the clust
 Install Flux if you have not done so already. Then, bootstrap Flux on your cluster.
 ```bash
 curl -s https://fluxcd.io/install.sh | sudo bash
-flux bootstrap github --owner=$(GITHUB_USER) --repository=gitops-energy-usage --path=clusters
+flux bootstrap github --owner=$GITHUB_USER --repository=gitops-energy-usage --path=clusters
 ```
 This will automatically add all the dependencies - Kepler, Prometheus & Grafana - on the cluster. Their manifests live in the `clusters/` dir ([here](clusters)).
 
@@ -74,20 +74,21 @@ To get the energy metrics, first, port-forward Prometheus to `9090`:
 kubectl port-forward pod/prometheus-k8s-0 9090 -n monitoring
 ```
 
-Then, query Prometheus to gather data about Flux Controllers living in the `flux` namespace:
+Then, we will query Prometheus to gather data about Flux Controllers living in the `flux-system` namespace.
 
-Query the Prometheus Pod `prometheus-k8s-0` with a curl request at the `api/v1/query` endpoint with the following [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) query:
+We can write queries for the Prometheus Pod `prometheus-k8s-0` with a curl request at the `api/v1/query` endpoint. For example, here is a query that gathers the current (`curr`) energy of compute (the CPU, denoted by `pkg`) in milliJoule:
 
 ```bash
 curl -G http://localhost:9090/api/v1/query --data-urlencode "query=pod_curr_energy_in_pkg_millijoule{pod_namespace='flux-system'}" | jq
 ```
+
 In the command above, the flag `--data-urlencode` is used to pass a Prometheus query in PromQL syntax. The result is piped to `jq` to transform it into json format. 
 
 The query itself measures the energy consumption of all of the Pods in the `flux-system` namespace, where the Flux controllers are deployed.
 
 There are four Flux controllers. These are the controllers for Sources, Helm, Kustomize, and Notification resources.
 
-The command below returns the **sum** of the energy consumed by the Flux controllers:
+The command below returns the **sum** of the energy consumed by the CPU to compute the Flux controllers:
 ```bash
 curl -G http://localhost:9090/api/v1/query --data-urlencode "query=sum(pod_curr_energy_in_pkg_millijoule{pod_namespace='flux-system'})" | jq
 {
@@ -107,15 +108,17 @@ curl -G http://localhost:9090/api/v1/query --data-urlencode "query=sum(pod_curr_
 }
 ```
 
-Narrow down the json results with the following filters for `jq` to only return the value:
+The json results can be narrowed down with the following filters for `jq` to isolate and return the value alone:
 ```bash
 curl -G http://localhost:9090/api/v1/query --data-urlencode "query=sum(pod_curr_energy_in_pkg_millijoule{pod_namespace='flux-system'})" | jq '.data.result[0].value[0]'
 1664037900.094
 ```
 
-The value is `1664037900.094 mJ (millijoules)`. The section below, ["Joule for Beginners"](#joule-for-beginners), goes over the basics (or a refresher) of joules.
+The value here is 1664037900.094 mJ (millijoules). The section below, ["Joule for Beginners"](#joule-for-beginners), goes over the basics (or a refresher) of joules.
 
-Ideally it would be great to narrow this further to a range that calculates the past ohur by using a [range vector](https://prometheus.io/docs/prometheus/latest/querying/basics/#range-vector-selectors).
+More queries can be found in [data-query.sh](data-query.sh). Queries with data can be found in [flux-energy-data.sh](flux-energy-data.sh).
+
+Ideally it would be great to narrow this further to a range that calculates the past hour by using a [range vector](https://prometheus.io/docs/prometheus/latest/querying/basics/#range-vector-selectors).
 
 #### 4. Gather Node-level energy data
 

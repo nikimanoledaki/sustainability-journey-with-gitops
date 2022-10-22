@@ -6,7 +6,7 @@
 # - Compute (`pkg`)
 # - Memory (`dram`)
 # - Pod (`pod_name`)
-# - Namespace (`namespace`)
+# - Namespace (`pod_namespace`)
 
 # 1. Current
 # each separate resource

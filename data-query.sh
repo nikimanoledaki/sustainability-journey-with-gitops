@@ -6,7 +6,7 @@
 # - Compute (`pkg`)
 # - Memory (`dram`)
 # - Pod (`pod_name`)
-# - Namespace (`namespace`)
+# - Namespace (`pod_namespace`)
 
 echo "1. Current"
 echo "each separate resource"
