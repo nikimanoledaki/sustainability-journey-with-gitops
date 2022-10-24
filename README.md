@@ -41,7 +41,8 @@ flux bootstrap github --owner=$GITHUB_USER --repository=gitops-energy-usage --pa
 ```
 This will automatically add all the dependencies - Kepler, Prometheus & Grafana - on the cluster. Their manifests live in the `clusters/` dir ([here](clusters)).
 
-#### 4. Gather base energy data about Flux
+#### 4. Gather energy consumption metrics about the Flux Source Controller
+
 First, let's check what lives in the Flux namespace:
 ```bash
 kubectl get all -n flux-system
@@ -74,19 +75,48 @@ To get the energy metrics, first, port-forward Prometheus to `9090`:
 kubectl port-forward pod/prometheus-k8s-0 9090 -n monitoring
 ```
 
-Then, we will query Prometheus to gather data about Flux Controllers living in the `flux-system` namespace.
-
-We can write queries for the Prometheus Pod `prometheus-k8s-0` with a curl request at the `api/v1/query` endpoint. For example, here is a query that gathers the current (`curr`) energy of compute (the CPU, denoted by `pkg`) in milliJoule:
+Queries can be written for the Prometheus Pod `prometheus-k8s-0` with a curl request that targets the `api/v1/query` endpoint. For example, here is a query that gathers the current (`curr`) energy of compute (the CPU, denoted by `pkg`) in milliJoule for the Flux Source Controller:
 
 ```bash
-curl -G http://localhost:9090/api/v1/query --data-urlencode "query=pod_curr_energy_in_pkg_millijoule{pod_namespace='flux-system'}" | jq
+curl -sG http://localhost:9090/api/v1/query --data-urlencode "query=pod_curr_energy_in_pkg_millijoule{pod_name='source-controller-7d98d6688c-d6mmd'}" | jq
+{
+  "status": "success",
+  "data": {
+    "resultType": "vector",
+    "result": [
+      {
+        "metric": {
+          "__name__": "pod_curr_energy_in_pkg_millijoule",
+          "command": "source-con",
+          "container": "kepler-exporter",
+          "endpoint": "http",
+          "instance": "c3.small.x86-01",
+          "job": "kepler-exporter",
+          "namespace": "kepler",
+          "pod": "kepler-exporter-6q26p",
+          "pod_name": "source-controller-7d98d6688c-d6mmd",
+          "pod_namespace": "flux-system",
+          "service": "kepler-exporter"
+        },
+        "value": [
+          1666559968.74,
+          "394"
+        ]
+      }
+    ]
+  }
+}
 ```
 
 In the command above, the flag `--data-urlencode` is used to pass a Prometheus query in PromQL syntax. The result is piped to `jq` to transform it into json format. 
 
-The query itself measures the energy consumption of all of the Pods in the `flux-system` namespace, where the Flux controllers are deployed.
+A list of example queries and data can be found in [flux-energy-data.md](flux-energy-data.md).
+<!-- 
+#### Energy consumption metrics about all Flux Controllers
 
-There are four Flux controllers. These are the controllers for Sources, Helm, Kustomize, and Notification resources.
+There are currently four default Flux controllers: the Source, Helm, Kustomize, and Notification Controllers.
+
+The query below measures the energy consumption of all of the Pods in the `flux-system` namespace, where the Flux controllers are deployed.
 
 The command below returns the **sum** of the energy consumed by the CPU to compute the Flux controllers:
 ```bash
@@ -116,10 +146,8 @@ curl -G http://localhost:9090/api/v1/query --data-urlencode "query=sum(pod_curr_
 
 The value here is 1664037900.094 mJ (millijoules). The section below, ["Joule for Beginners"](#joule-for-beginners), goes over the basics (or a refresher) of joules.
 
-More queries can be found in [data-query.sh](data-query.sh). Queries with data can be found in [flux-energy-data.sh](flux-energy-data.sh).
-
-Ideally it would be great to narrow this further to a range that calculates the past hour by using a [range vector](https://prometheus.io/docs/prometheus/latest/querying/basics/#range-vector-selectors).
-
+Ideally it would be great to narrow this further to a range that calculates the past hour by using a [range vector](https://prometheus.io/docs/prometheus/latest/querying/basics/#range-vector-selectors). -->
+<!-- 
 #### 4. Gather Node-level energy data
 
 The `node_enegy_stat` vector will return information about the Kubernetes Node:
@@ -172,9 +200,9 @@ Lastly, the json result for `node_energy_stat` narrowed down by adding filters t
 ```bash
 curl -G http://localhost:9090/api/v1/query --data-urlencode "query=node_energy_stat" | jq '.data.result[0].value[0]'
 1664037946.617
-```
+``` -->
 
-#### 5. Deploy a mock application with Flux
+<!-- #### 5. Deploy a mock application with Flux
 Uncomment the code for the mock API in `clusters/app.yaml` ([here](clusters/app.yaml)).
 Commit and push these changes to your repository. This will trigger a reconciliation.
 
@@ -182,7 +210,7 @@ Commit and push these changes to your repository. This will trigger a reconcilia
 Query Prometheus to gather data about the Flux Controllers:
 ```bash
 curl -G http://localhost:9090/api/v1/query --data-urlencode "query=pod_curr_energy_in_pkg_millijoule{pod_namespace='flux-system'}" | jq
-```
+``` -->
 
 #### 7. Visualise the energy data with Grafana
 The energy consumption data can be visualised with Grafana. This can be used alongside any of the tests mentioned above. 
