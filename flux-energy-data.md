@@ -113,7 +113,7 @@ curl -sG http://localhost:9090/api/v1/query --data-urlencode "query=sum(pod_curr
 
 **Current for namespace `flux-system` in the last minute**
 ```bash
-curl -sG http://localhost:9090/api/v1/query --data-urlencode "query=rate(pod_curr_energy_millijoule{pod_namespace='flux-system'}[1m])/3" | jq '.data.result[0].value[1]'
+curl -sG http://localhost:9090/api/v1/query --data-urlencode "query=rate(pod_curr_energy_millijoule{pod_namespace='flux-system'}[24h])" | jq '.data.result[0].value[1]'
 "7.292397660818714"
 ```
 
