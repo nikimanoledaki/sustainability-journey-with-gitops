@@ -219,7 +219,7 @@ The script provided can be used to spin up Grafana and load the Kepler dashboard
 ./scripts/configure-grafana.sh
 ```
 
-### Coming Soon (Hopefully)!
+### Next Steps
 
 The main restriction at the moment is the environment setup for Kepler. The reason for this, as written in [this](https://blog.px.dev/ebpf-portability/) post by the Pixie team on "The Challenge with Deploying eBPF Into the Wild": 
 > One problem that hinders the wide-scale deployment of eBPF is the fact that it is challenging to build applications that are compatible across a wide range of Linux distributions.
